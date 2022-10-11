@@ -61,6 +61,16 @@ func NewClient(addr string) (*Client, func() error, error) {
 	return &Client{decryptClient: NewDecryptClient(conn)}, conn.Close, nil
 }
 
+// PublicMainKey calls the grpc method.
+func (c *Client) PublicMainKey(ctx context.Context) ([]byte, error) {
+	resp, err := c.decryptClient.PublicMainKey(ctx, &EmptyMessage{})
+	if err != nil {
+		return nil, fmt.Errorf("sending grpc request: %w", err)
+	}
+
+	return resp.PublicKey, nil
+}
+
 // Start calls the Start grpc message.
 func (c *Client) Start(ctx context.Context, pollID string) (pubKey []byte, pubKeySig []byte, err error) {
 	resp, err := c.decryptClient.Start(ctx, &StartRequest{Id: pollID})
