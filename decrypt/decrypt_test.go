@@ -104,7 +104,7 @@ func TestStop(t *testing.T) {
 			t.Errorf("got signature %s, expected signature %s", signature, "sig:"+string(content))
 		}
 
-		expected := `{"id":"test/1","votes":["Y","A",{"error":"decrypt"}]}`
+		expected := `{"id":"test/1","votes":["Y","A",{"error":"encryption not valid"}]}`
 		if string(content) != expected {
 			t.Errorf("got %s, expected %s", content, expected)
 		}

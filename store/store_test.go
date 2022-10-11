@@ -21,10 +21,10 @@ func TestSaveKey(t *testing.T) {
 			t.Fatalf("SaveKey: %v", err)
 		}
 
-		fullpath := path.Join(tmpPath, "test_5_key")
+		fullpath := path.Join(tmpPath, "test_5.key")
 		content, err := os.ReadFile(fullpath)
 		if err != nil {
-			t.Fatalf("reading keyfile: %v", err)
+			t.Fatalf("Reading keyfile: %v", err)
 		}
 
 		if !bytes.Equal(content, []byte("key")) {
@@ -43,7 +43,7 @@ func TestSaveKey(t *testing.T) {
 
 	t.Run("file exists", func(t *testing.T) {
 		tmpPath := t.TempDir()
-		os.WriteFile(path.Join(tmpPath, "test_5_key"), []byte("old key"), 0400)
+		os.WriteFile(path.Join(tmpPath, "test_5.key"), []byte("old key"), 0400)
 		s := store.New(tmpPath)
 
 		if err := s.SaveKey("test/5", []byte("key")); err != errorcode.Exist {
@@ -55,7 +55,7 @@ func TestSaveKey(t *testing.T) {
 func TestLoadKey(t *testing.T) {
 	t.Run("valid", func(t *testing.T) {
 		tmpPath := t.TempDir()
-		os.WriteFile(path.Join(tmpPath, "test_5_key"), []byte("key"), 0400)
+		os.WriteFile(path.Join(tmpPath, "test_5.key"), []byte("key"), 0400)
 		s := store.New(tmpPath)
 
 		got, err := s.LoadKey("test/5")
@@ -81,14 +81,14 @@ func TestLoadKey(t *testing.T) {
 func TestValidateSignature(t *testing.T) {
 	t.Run("firt time", func(t *testing.T) {
 		tmpPath := t.TempDir()
-		os.WriteFile(path.Join(tmpPath, "test_5_key"), []byte("key"), 0400)
+		os.WriteFile(path.Join(tmpPath, "test_5.key"), []byte("key"), 0400)
 		s := store.New(tmpPath)
 
 		if err := s.ValidateSignature("test/5", []byte("hash")); err != nil {
 			t.Errorf("ValidateSignature: %v", err)
 		}
 
-		fullpath := path.Join(tmpPath, "test_5_hash")
+		fullpath := path.Join(tmpPath, "test_5.hash")
 		content, err := os.ReadFile(fullpath)
 		if err != nil {
 			t.Fatalf("reading hash file: %v", err)
@@ -110,8 +110,8 @@ func TestValidateSignature(t *testing.T) {
 
 	t.Run("second time valid", func(t *testing.T) {
 		tmpPath := t.TempDir()
-		os.WriteFile(path.Join(tmpPath, "test_5_key"), []byte("key"), 0400)
-		os.WriteFile(path.Join(tmpPath, "test_5_hash"), []byte("hash"), 0400)
+		os.WriteFile(path.Join(tmpPath, "test_5.key"), []byte("key"), 0400)
+		os.WriteFile(path.Join(tmpPath, "test_5.hash"), []byte("hash"), 0400)
 		s := store.New(tmpPath)
 
 		if err := s.ValidateSignature("test/5", []byte("hash")); err != nil {
@@ -121,8 +121,8 @@ func TestValidateSignature(t *testing.T) {
 
 	t.Run("second time invalid", func(t *testing.T) {
 		tmpPath := t.TempDir()
-		os.WriteFile(path.Join(tmpPath, "test_5_key"), []byte("key"), 0400)
-		os.WriteFile(path.Join(tmpPath, "test_5_hash"), []byte("hash"), 0400)
+		os.WriteFile(path.Join(tmpPath, "test_5.key"), []byte("key"), 0400)
+		os.WriteFile(path.Join(tmpPath, "test_5.hash"), []byte("hash"), 0400)
 		s := store.New(tmpPath)
 
 		if err := s.ValidateSignature("test/5", []byte("invalid")); err != errorcode.Invalid {
@@ -143,8 +143,8 @@ func TestValidateSignature(t *testing.T) {
 func TestClearPoll(t *testing.T) {
 	t.Run("remove files", func(t *testing.T) {
 		tmpPath := t.TempDir()
-		keyFile := path.Join(tmpPath, "test_5_key")
-		hashFile := path.Join(tmpPath, "test_5_hash")
+		keyFile := path.Join(tmpPath, "test_5.key")
+		hashFile := path.Join(tmpPath, "test_5.hash")
 		os.WriteFile(keyFile, []byte("key"), 0400)
 		os.WriteFile(hashFile, []byte("hash"), 0400)
 		s := store.New(tmpPath)
