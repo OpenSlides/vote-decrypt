@@ -7,10 +7,13 @@ type Option = func(*Decrypt)
 
 // WithRandomSource sets the random source. Uses crypt/rand.Reader as default.
 //
+// # Also sets the decryptWorkers to 1
+//
 // Should only be used for testing.
 func WithRandomSource(r io.Reader) Option {
 	return func(d *Decrypt) {
 		d.random = r
+		d.decryptWorkers = 1
 	}
 }
 
