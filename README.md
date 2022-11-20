@@ -17,6 +17,7 @@ go build
 ./vote-decrypt
 ```
 
+
 ### With Docker
 
 The container needs a key file. As default, it lookt for it at
@@ -99,6 +100,7 @@ found in the folder
 
 It contains three methods. `PublicMainKey`, `Start`, `Stop`, and `Clean`.
 
+
 ### PublicMainKey
 
 PublicMainKey returns the public main key that is used to sign the poll poll
@@ -137,15 +139,16 @@ vote-decrypt:
 
 1.  The clients have to receive the public main key via a secure channel.
 2.  The poll manager start a poll by calling `Start`.
-3.  The poll manager distributes the public poll key to the clients.
+3.  The poll manager distributes the public poll key with its signature to the
+    clients.
 4.  The clients validate the public poll key with its signature and the main
     key.
 5.  The clients create there vote and encrypt them with the public poll key.
 6.  The clients send the encrypted votes to the poll manager.
 7.  After the poll manager received all votes, he sends them to vote-decrypt by
     calling the `Stop`method.
-8.  The poll manager receives the decrypted vote list and distributes them to
-    the clients as a blob.
+8.  The poll manager receives the decrypted vote list with its signature and
+    distributes them to the clients as a blob.
 9.  The clients validate the vote blob with its signature and the main key.
 10. The clients evaulute the poll.
 

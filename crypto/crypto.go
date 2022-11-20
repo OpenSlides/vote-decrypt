@@ -133,7 +133,7 @@ func (c Crypto) Sign(value []byte) []byte {
 //
 // It returns the created public key (32 byte) the noonce (12 byte) and the
 // encrypted value of the given plaintext.
-func Encrypt(random io.Reader, publicKey []byte, plaintext []byte) ([]byte, error) {
+func Encrypt(random io.Reader, publicPollKey []byte, plaintext []byte) ([]byte, error) {
 	cipherPrefix := make([]byte, pubKeySize+nonceSize)
 
 	ephemeralPrivateKey := make([]byte, curve25519.ScalarSize)
@@ -147,7 +147,7 @@ func Encrypt(random io.Reader, publicKey []byte, plaintext []byte) ([]byte, erro
 	}
 	copy(cipherPrefix[:pubKeySize], ephemeralPublicKey)
 
-	sharedSecred, err := curve25519.X25519(ephemeralPrivateKey, publicKey)
+	sharedSecred, err := curve25519.X25519(ephemeralPrivateKey, publicPollKey)
 	if err != nil {
 		return nil, fmt.Errorf("creating shared secred: %w", err)
 	}
