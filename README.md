@@ -20,7 +20,7 @@ go build
 
 ### With Docker
 
-The container needs a key file. As default, it lookt for it at
+The container needs a key file. As default, it look for it at
 `/run/secrets/vote_main_key` inside the container. Another file (from inside the
 container) can be choosen via the first argument. The file has to be mounted
 inside the docker container.
@@ -62,7 +62,7 @@ vote-decrypt pub-key KEYFILE
 The keys are in raw bytes. To decode it with base64 use
 
 ```
-vote-decrypt pub-key KEYFILE --base64
+vote-decrypt pub-key KEYFILE --base-64
 ```
 
 
