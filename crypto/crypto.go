@@ -23,33 +23,30 @@ import (
 )
 
 const (
-	pubKeySize = 32
-	nonceSize  = 12
+	nonceSize = 12
 )
-
-// curve sets the ecdh curve to use in this packages.
-//
-// In theory, all curves supported from the go ecdh package could be used. But
-// in practice, only x25519 works. The reason is, that only x25519 has a fix key
-// size (see the constant pubKeySize). The ciphertext contains the public key at
-// the first `pubKeySize` bytes. With a variable size key, it is not possible to
-// know, where the key ends end the decoded bytes start. To support other
-// curves, we have the encode the ciphertext in another way.
-var curve = ecdh.X25519()
 
 // Crypto implements all cryptographic functions needed for the decrypt service.
 type Crypto struct {
 	mainKey ed25519.PrivateKey
 	random  io.Reader
+	curve   ecdh.Curve
 }
 
 // New initializes a Crypto object with a main key and a random source.
 //
 // mainKey has to be a 32 byte slice that represents a ed25519 key.
-func New(mainKey []byte, random io.Reader) Crypto {
+//
+// curve is the ecdh curve to use. If set the nil, it uses x25519.
+func New(mainKey []byte, random io.Reader, curve ecdh.Curve) Crypto {
+	if curve == nil {
+		curve = ecdh.X25519()
+	}
+
 	return Crypto{
 		mainKey: ed25519.NewKeyFromSeed(mainKey),
 		random:  random,
+		curve:   curve,
 	}
 }
 
@@ -73,7 +70,7 @@ func (c Crypto) CreatePollKey() ([]byte, error) {
 // PublicPollKey returns the public poll key and the signature for the given
 // key.
 func (c Crypto) PublicPollKey(privateKey []byte) (pubKey []byte, pubKeySig []byte, err error) {
-	privKey, err := curve.NewPrivateKey(privateKey)
+	privKey, err := c.curve.NewPrivateKey(privateKey)
 	if err != nil {
 		return nil, nil, fmt.Errorf("parsing private poll key: %w", err)
 	}
@@ -94,18 +91,20 @@ func (c Crypto) PublicPollKey(privateKey []byte) (pubKey []byte, pubKeySig []byt
 // This function uses x25519 as described in rfc 7748. It uses hkdf with sha256
 // for the key derivation.
 func (c Crypto) Decrypt(privateKey []byte, ciphertext []byte) ([]byte, error) {
-	if len(ciphertext) < pubKeySize+nonceSize+aes.BlockSize {
+	if len(ciphertext) < nonceSize+aes.BlockSize {
 		return nil, fmt.Errorf("invalid cipher")
 	}
 
-	ephemeralPublicKey, err := curve.NewPublicKey(ciphertext[:pubKeySize])
+	pubKeySize := ciphertext[0]
+
+	ephemeralPublicKey, err := c.curve.NewPublicKey(ciphertext[1 : 1+pubKeySize])
 	if err != nil {
 		return nil, fmt.Errorf("invalid publick key in ciphertext: %w", err)
 	}
 
-	nonce := ciphertext[pubKeySize : pubKeySize+nonceSize]
+	nonce := ciphertext[1+pubKeySize : 1+pubKeySize+nonceSize]
 
-	privKey, err := curve.NewPrivateKey(privateKey)
+	privKey, err := c.curve.NewPrivateKey(privateKey)
 	if err != nil {
 		return nil, fmt.Errorf("initializing private key: %w", err)
 	}
@@ -131,7 +130,7 @@ func (c Crypto) Decrypt(privateKey []byte, ciphertext []byte) ([]byte, error) {
 		return nil, fmt.Errorf("create gcm mode: %w", err)
 	}
 
-	plaintext, err := mode.Open(nil, nonce, ciphertext[pubKeySize+nonceSize:], nil)
+	plaintext, err := mode.Open(nil, nonce, ciphertext[1+pubKeySize+nonceSize:], nil)
 	if err != nil {
 		return nil, fmt.Errorf("decrypting ciphertext: %w", err)
 	}
@@ -154,13 +153,13 @@ func (c Crypto) Sign(value []byte) []byte {
 //
 // It returns the created public key (32 byte) the noonce (12 byte) and the
 // encrypted value of the given plaintext.
-func Encrypt(random io.Reader, publicPollKey []byte, plaintext []byte) ([]byte, error) {
+func Encrypt(random io.Reader, curve ecdh.Curve, publicPollKey []byte, plaintext []byte) ([]byte, error) {
 	ephemeralPrivateKey, err := curve.GenerateKey(random)
 	if err != nil {
 		return nil, fmt.Errorf("creating ephemeral private key: %w", err)
 	}
 
-	cipherPrefix := ephemeralPrivateKey.PublicKey().Bytes()
+	pubKeyBytes := ephemeralPrivateKey.PublicKey().Bytes()
 
 	remotePublicKey, err := curve.NewPublicKey(publicPollKey)
 	if err != nil {
@@ -187,7 +186,11 @@ func Encrypt(random io.Reader, publicPollKey []byte, plaintext []byte) ([]byte, 
 	if _, err := random.Read(nonce); err != nil {
 		return nil, fmt.Errorf("read random for nonce: %w", err)
 	}
-	cipherPrefix = append(cipherPrefix, nonce...)
+
+	cipherPrefix := make([]byte, 1+len(pubKeyBytes)+nonceSize)
+	cipherPrefix[0] = byte(len(pubKeyBytes))
+	copy(cipherPrefix[1:], pubKeyBytes)
+	copy(cipherPrefix[1+len(pubKeyBytes):], nonce)
 
 	mode, err := cipher.NewGCM(block)
 	if err != nil {

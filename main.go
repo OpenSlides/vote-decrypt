@@ -70,7 +70,7 @@ func runServer(ctx context.Context) error {
 		return fmt.Errorf("reading key: %w", err)
 	}
 
-	cryptoLib := crypto.New(key, rand.Reader)
+	cryptoLib := crypto.New(key, rand.Reader, nil)
 
 	fmt.Printf("Public Main Key: %s\n", base64.StdEncoding.EncodeToString(cryptoLib.PublicMainKey()))
 
@@ -94,7 +94,7 @@ func runPubKey(ctx context.Context) error {
 		return fmt.Errorf("reading key: %w", err)
 	}
 
-	pubKey := crypto.New(key, rand.Reader).PublicMainKey()
+	pubKey := crypto.New(key, rand.Reader, nil).PublicMainKey()
 
 	decodedKey := string(pubKey)
 	if cli.PubKey.Base64 {

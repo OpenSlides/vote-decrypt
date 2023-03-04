@@ -9,7 +9,7 @@ import (
 )
 
 func TestCreatePollKey(t *testing.T) {
-	c := crypto.New(mockMainKey(), randomMock{})
+	c := crypto.New(mockMainKey(), randomMock{}, nil)
 
 	key, err := c.CreatePollKey()
 	if err != nil {
@@ -22,7 +22,7 @@ func TestCreatePollKey(t *testing.T) {
 }
 
 func TestPublicPollKey(t *testing.T) {
-	c := crypto.New(mockMainKey(), randomMock{})
+	c := crypto.New(mockMainKey(), randomMock{}, nil)
 
 	pub, sig, err := c.PublicPollKey(mockPollKey())
 	if err != nil {
@@ -35,24 +35,26 @@ func TestPublicPollKey(t *testing.T) {
 }
 
 func TestDecrypt(t *testing.T) {
-	c := crypto.New(mockMainKey(), randomMock{})
+	curve := ecdh.X25519()
+
+	c := crypto.New(mockMainKey(), randomMock{}, curve)
 
 	plaintext := "this is my vote"
 
-	privKey, err := ecdh.X25519().GenerateKey(randomMock{})
+	privKey, err := curve.GenerateKey(randomMock{})
 	if err != nil {
 		t.Fatalf("creating private key: %v", err)
 	}
 	pubKey := privKey.PublicKey().Bytes()
 
-	encrypted, err := crypto.Encrypt(randomMock{}, pubKey, []byte(plaintext))
+	encrypted, err := crypto.Encrypt(randomMock{}, curve, pubKey, []byte(plaintext))
 	if err != nil {
 		t.Fatalf("encrypting plaintext: %v", err)
 	}
 
 	decrypted, err := c.Decrypt(privKey.Bytes(), encrypted)
 	if err != nil {
-		t.Errorf("decrypt: %v", err)
+		t.Fatalf("decrypt: %v", err)
 	}
 
 	if string(decrypted) != plaintext {
@@ -61,7 +63,7 @@ func TestDecrypt(t *testing.T) {
 }
 
 func TestSign(t *testing.T) {
-	c := crypto.New(mockMainKey(), randomMock{})
+	c := crypto.New(mockMainKey(), randomMock{}, nil)
 
 	data := []byte("this is my value")
 

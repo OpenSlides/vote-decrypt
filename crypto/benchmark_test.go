@@ -8,11 +8,12 @@ import (
 )
 
 func benchmarkDecrypt(b *testing.B, voteCount int, voteByteSize int) {
-	cr := crypto.New(mockMainKey(), randomMock{})
+	curve := ecdh.X25519()
+	cr := crypto.New(mockMainKey(), randomMock{}, curve)
 
 	plaintext := make([]byte, voteByteSize)
 
-	privKey, err := ecdh.X25519().GenerateKey(randomMock{})
+	privKey, err := curve.GenerateKey(randomMock{})
 	if err != nil {
 		b.Fatalf("creating private key: %v", err)
 	}
@@ -21,7 +22,7 @@ func benchmarkDecrypt(b *testing.B, voteCount int, voteByteSize int) {
 
 	votes := make([][]byte, voteCount)
 	for i := 0; i < voteCount; i++ {
-		encrypted, err := crypto.Encrypt(randomMock{}, pubKey, plaintext)
+		encrypted, err := crypto.Encrypt(randomMock{}, curve, pubKey, plaintext)
 		if err != nil {
 			b.Fatalf("encrypting vote: %v", err)
 		}
