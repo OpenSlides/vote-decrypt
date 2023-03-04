@@ -60,7 +60,7 @@ var cli struct {
 	PubKey struct {
 		MainKey     *os.File `arg:"" help:"Path to the main key file."`
 		SkipNewline bool     `help:"Do not output the trailing newline." short:"n"`
-		Base64      bool     `help:"Decode the output with base64." short:"b"`
+		Base64      bool     `help:"Decode the output with base64." short:"b" name:"base64"`
 	} `cmd:"" help:"Calculates the public key for a private key file"`
 }
 
@@ -116,7 +116,7 @@ func runMainKey(ctx context.Context) error {
 		return fmt.Errorf("reading key: %w", err)
 	}
 
-	if err := os.WriteFile(cli.MainKey.MainKey, key, 0600); err != nil {
+	if err := os.WriteFile(cli.MainKey.MainKey, key, 0o600); err != nil {
 		return fmt.Errorf("writing main key: %w", err)
 	}
 
