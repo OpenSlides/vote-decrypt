@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/alecthomas/kong v0.7.1
-	github.com/golang/protobuf v1.5.2
+	github.com/golang/protobuf v1.5.3
 	golang.org/x/crypto v0.7.0
 	golang.org/x/sys v0.6.0
 	google.golang.org/grpc v1.53.0
