@@ -91,11 +91,15 @@ func (c Crypto) PublicPollKey(privateKey []byte) (pubKey []byte, pubKeySig []byt
 // This function uses x25519 as described in rfc 7748. It uses hkdf with sha256
 // for the key derivation.
 func (c Crypto) Decrypt(privateKey []byte, ciphertext []byte) ([]byte, error) {
-	if len(ciphertext) < nonceSize+aes.BlockSize {
+	if len(ciphertext) < 1 {
 		return nil, fmt.Errorf("invalid cipher")
 	}
 
 	pubKeySize := ciphertext[0]
+
+	if len(ciphertext) < int(pubKeySize)+1+nonceSize {
+		return nil, fmt.Errorf("invalid cipher")
+	}
 
 	ephemeralPublicKey, err := c.curve.NewPublicKey(ciphertext[1 : 1+pubKeySize])
 	if err != nil {

@@ -31,4 +31,4 @@ COPY --from=base /root/vote-decrypt .
 EXPOSE 9014
 
 ENTRYPOINT ["/vote-decrypt"]
-CMD ["/run/secrets/vote_main_key"]
+CMD ["server", "/run/secrets/vote_main_key"]

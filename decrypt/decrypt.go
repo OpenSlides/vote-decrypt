@@ -200,7 +200,7 @@ func (d *Decrypt) decryptVotes(key []byte, voteList [][]byte) ([][]byte, error) 
 				decrypted, err := d.crypto.Decrypt(key, vote)
 				if err != nil {
 					// TODO: Is is allowed to log the error?
-					log.Printf("TODO: vote: %s: %v", vote, err)
+					log.Printf("TODO: vote: %v", err)
 					decrypted = d.decryptErrorValue
 				}
 
