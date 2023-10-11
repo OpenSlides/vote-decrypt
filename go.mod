@@ -3,7 +3,7 @@ module github.com/OpenSlides/vote-decrypt
 go 1.20
 
 require (
-	github.com/alecthomas/kong v0.8.0
+	github.com/alecthomas/kong v0.8.1
 	github.com/golang/protobuf v1.5.3
 	golang.org/x/crypto v0.14.0
 	golang.org/x/sys v0.13.0
