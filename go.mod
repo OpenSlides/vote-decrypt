@@ -4,11 +4,11 @@ go 1.22
 
 require (
 	github.com/alecthomas/kong v0.8.1
-	github.com/golang/protobuf v1.5.3
+	github.com/golang/protobuf v1.5.4
 	golang.org/x/crypto v0.21.0
 	golang.org/x/sys v0.18.0
 	google.golang.org/grpc v1.62.0
-	google.golang.org/protobuf v1.32.0
+	google.golang.org/protobuf v1.33.0
 )
 
 require (
