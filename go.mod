@@ -5,7 +5,7 @@ go 1.22
 require (
 	github.com/alecthomas/kong v0.9.0
 	github.com/golang/protobuf v1.5.4
-	golang.org/x/crypto v0.24.0
+	golang.org/x/crypto v0.25.0
 	golang.org/x/sys v0.22.0
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.2
