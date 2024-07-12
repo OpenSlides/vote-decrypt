@@ -2,6 +2,7 @@ package decrypt_test
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"sync"
 
@@ -53,7 +54,7 @@ func NewStoreMock() *StoreMock {
 	}
 }
 
-func (s *StoreMock) SaveKey(id string, key []byte) error {
+func (s *StoreMock) SaveKey(_ context.Context, id string, key []byte) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -68,7 +69,7 @@ func (s *StoreMock) SaveKey(id string, key []byte) error {
 // LoadKey returns the private key from the store.
 //
 // If the poll is unknown return (nil, nil)
-func (s *StoreMock) LoadKey(id string) ([]byte, error) {
+func (s *StoreMock) LoadKey(_ context.Context, id string) ([]byte, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -83,7 +84,7 @@ func (s *StoreMock) LoadKey(id string) ([]byte, error) {
 // poll. Saves the signature for future calls.
 //
 // Has to return an error if the id is unknown in the store.
-func (s *StoreMock) ValidateSignature(id string, signature []byte) error {
+func (s *StoreMock) ValidateSignature(_ context.Context, id string, signature []byte) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -106,7 +107,7 @@ func (s *StoreMock) ValidateSignature(id string, signature []byte) error {
 }
 
 // Clear removes all data for the poll.
-func (s *StoreMock) ClearPoll(id string) error {
+func (s *StoreMock) ClearPoll(_ context.Context, id string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

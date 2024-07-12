@@ -1,8 +1,9 @@
-// Package store is a storrage backend for vote-decrypt that uses the file
+// Package filesystem is a storrage backend for vote-decrypt that uses the file
 // system.
-package store
+package filesystem
 
 import (
+	"context"
 	"crypto/subtle"
 	"errors"
 	"fmt"
@@ -42,12 +43,12 @@ func New(path string) *Store {
 // SaveKey stores the private key.
 //
 // Has to return an error, if a key already exists.
-func (s *Store) SaveKey(id string, key []byte) error {
+func (s *Store) SaveKey(_ context.Context, id string, key []byte) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.path == "" {
-		return fmt.Errorf("No data dir provided. Check the environment variable VOTE_DECRYPT_STORE")
+		return fmt.Errorf("no data dir provided. Check the environment variable VOTE_DECRYPT_STORE")
 	}
 
 	if err := os.MkdirAll(s.path, os.ModePerm); err != nil {
@@ -78,7 +79,7 @@ func (s *Store) SaveKey(id string, key []byte) error {
 // LoadKey returns the private key from the store.
 //
 // If the poll is unknown return (nil, nil)
-func (s *Store) LoadKey(id string) ([]byte, error) {
+func (s *Store) LoadKey(_ context.Context, id string) ([]byte, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -97,7 +98,7 @@ func (s *Store) LoadKey(id string) ([]byte, error) {
 // poll. Saves the signature for future calls.
 //
 // Has to return an error if the id is unknown in the store.
-func (s *Store) ValidateSignature(id string, hash []byte) error {
+func (s *Store) ValidateSignature(_ context.Context, id string, hash []byte) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -145,7 +146,7 @@ func (s *Store) checkHash(id string, hash []byte) error {
 }
 
 // ClearPoll removes all data for the poll.
-func (s *Store) ClearPoll(id string) error {
+func (s *Store) ClearPoll(_ context.Context, id string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

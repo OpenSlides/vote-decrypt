@@ -71,7 +71,7 @@ func (d *Decrypt) Start(ctx context.Context, pollID string) (pubKey []byte, pubK
 	}
 
 	// TODO: Load Key and CreatePoll Key have probably be atomic.
-	pollKey, err := d.store.LoadKey(pollID)
+	pollKey, err := d.store.LoadKey(ctx, pollID)
 	if err != nil {
 		if !errors.Is(err, errorcode.NotExist) {
 			return nil, nil, fmt.Errorf("loading poll key: %w", err)
@@ -83,7 +83,7 @@ func (d *Decrypt) Start(ctx context.Context, pollID string) (pubKey []byte, pubK
 		}
 
 		pollKey = key
-		if err := d.store.SaveKey(pollID, key); err != nil {
+		if err := d.store.SaveKey(ctx, pollID, key); err != nil {
 			return nil, nil, fmt.Errorf("saving poll key: %w", err)
 		}
 	}
@@ -107,7 +107,7 @@ func (d *Decrypt) Start(ctx context.Context, pollID string) (pubKey []byte, pubK
 //
 // TODO: This implementation is wrong. Not the output has to be hashed and saved, but the input.
 func (d *Decrypt) Stop(ctx context.Context, pollID string, voteList [][]byte) (decryptedContent, signature []byte, err error) {
-	pollKey, err := d.store.LoadKey(pollID)
+	pollKey, err := d.store.LoadKey(ctx, pollID)
 	if err != nil {
 		return nil, nil, fmt.Errorf("loading poll key: %w", err)
 	}
@@ -131,7 +131,7 @@ func (d *Decrypt) Stop(ctx context.Context, pollID string, voteList [][]byte) (d
 	// This has to be the last step of this function to protect agains timing
 	// attacks. All other steps have to be run, even when the calll is doomed to
 	// fail in this step
-	if err := d.store.ValidateSignature(pollID, signature); err != nil {
+	if err := d.store.ValidateSignature(ctx, pollID, signature); err != nil {
 		if errors.Is(err, errorcode.Invalid) {
 			return nil, nil, fmt.Errorf("stop was called with different parameters before")
 		}
@@ -143,7 +143,7 @@ func (d *Decrypt) Stop(ctx context.Context, pollID string, voteList [][]byte) (d
 
 // Clear stops a poll by removing the generated cryptographic key.
 func (d *Decrypt) Clear(ctx context.Context, pollID string) error {
-	if err := d.store.ClearPoll(pollID); err != nil {
+	if err := d.store.ClearPoll(ctx, pollID); err != nil {
 		return fmt.Errorf("clearing poll from store: %w", err)
 	}
 	return nil
@@ -261,12 +261,12 @@ type Store interface {
 	// SaveKey stores the private key.
 	//
 	// Has to return an error `errorcode.Exist` if the key is already known.
-	SaveKey(id string, key []byte) error
+	SaveKey(ctx context.Context, id string, key []byte) error
 
 	// LoadKey returns the private key from the store.
 	//
 	// If the poll is unknown return `errorcode.NotExist`
-	LoadKey(id string) (key []byte, err error)
+	LoadKey(ctx context.Context, id string) (key []byte, err error)
 
 	// ValidateSignature makes sure, that no other signature is saved for a
 	// poll. Saves the signature for future calls.
@@ -275,12 +275,12 @@ type Store interface {
 	// call.
 	//
 	// Has to return `errorcode.NotExist` when the id does not exist.
-	ValidateSignature(id string, hash []byte) error
+	ValidateSignature(ctx context.Context, id string, hash []byte) error
 
 	// ClearPoll removes all data for the poll.
 	//
 	// Does not return an error if poll does not exist.
-	ClearPoll(id string) error
+	ClearPoll(ctx context.Context, id string) error
 }
 
 // jsonListToContent creates one byte slice from a list of votes in json format.

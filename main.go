@@ -13,7 +13,8 @@ import (
 	"github.com/OpenSlides/vote-decrypt/crypto"
 	"github.com/OpenSlides/vote-decrypt/decrypt"
 	"github.com/OpenSlides/vote-decrypt/grpc"
-	"github.com/OpenSlides/vote-decrypt/store"
+	"github.com/OpenSlides/vote-decrypt/store/filesystem"
+	"github.com/OpenSlides/vote-decrypt/store/postgres"
 	"github.com/alecthomas/kong"
 	"golang.org/x/sys/unix"
 )
@@ -30,10 +31,10 @@ func main() {
 		err = runServer(ctx)
 
 	case "main-key <main-key>":
-		err = runMainKey(ctx)
+		err = runMainKey()
 
 	case "pub-key <main-key>":
-		err = runPubKey(ctx)
+		err = runPubKey()
 
 	default:
 		panic(fmt.Sprintf("Unknown command: %s", cliCtx.Command()))
@@ -49,8 +50,9 @@ var cli struct {
 	Server struct {
 		MainKey *os.File `arg:"" help:"Path to the main key file."`
 
-		Port  int    `help:"Port for the server. Defaults to 9014." short:"p" env:"VOTE_DECRYPT_PORT" default:"9014"`
-		Store string `help:"Path for the file system storage of poll keys." env:"VOTE_DECRYPT_STORE" default:"vote_data"`
+		Port         int    `help:"Port for the server. Defaults to 9014." short:"p" env:"VOTE_DECRYPT_PORT" default:"9014"`
+		Store        string `help:"Path for the file system storage of poll keys." env:"VOTE_DECRYPT_STORE" default:"vote_data"`
+		PostgresConf string `help:"Config for Postgres" env:"VOTE_DECRYPT_POSTGRES"`
 	} `cmd:"" help:"Starts the vote decrypt grpc server." default:"withargs"`
 
 	MainKey struct {
@@ -74,9 +76,24 @@ func runServer(ctx context.Context) error {
 
 	fmt.Printf("Public Main Key: %s\n", base64.StdEncoding.EncodeToString(cryptoLib.PublicMainKey()))
 
+	var store decrypt.Store
+	switch {
+	case cli.Server.PostgresConf != "":
+		pg, err := postgres.New(ctx, cli.Server.PostgresConf)
+		if err != nil {
+			return fmt.Errorf("connecting to postgres: %w", err)
+		}
+
+		store = pg
+
+	default:
+		store = filesystem.New(cli.Server.Store)
+
+	}
+
 	decrypter := decrypt.New(
 		cryptoLib,
-		store.New(cli.Server.Store),
+		store,
 	)
 
 	addr := fmt.Sprintf(":%d", cli.Server.Port)
@@ -88,7 +105,7 @@ func runServer(ctx context.Context) error {
 	return nil
 }
 
-func runPubKey(ctx context.Context) error {
+func runPubKey() error {
 	key := make([]byte, 32)
 	if _, err := io.ReadFull(cli.PubKey.MainKey, key); err != nil {
 		return fmt.Errorf("reading key: %w", err)
@@ -110,7 +127,7 @@ func runPubKey(ctx context.Context) error {
 	return nil
 }
 
-func runMainKey(ctx context.Context) error {
+func runMainKey() error {
 	key := make([]byte, 32)
 	if _, err := io.ReadFull(rand.Reader, key); err != nil {
 		return fmt.Errorf("reading key: %w", err)
