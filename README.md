@@ -1,5 +1,8 @@
 # Vote Decrypt
 
+> [!CAUTION]
+> This service was never used in production. We changed the concept.
+
 Vote Decrypt is a service to decrypt a list of encrypted votes and return then
 in random order.
 
